@@ -1,0 +1,250 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>3D Love Scene (Zoom Dibatasi)</title>
+    <style>
+        html, body {
+        margin: 0;
+        padding: 0;
+        background: black;
+        overflow: hidden;
+        font-family: 'Segoe UI', sans-serif;
+        }
+
+        .viewport {
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        perspective: 1200px;
+        position: relative;
+        touch-action: none;
+        background: #000; /* Hitam pekat */
+        }
+
+        .world {
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        position: relative;
+        }
+
+        .scene {
+        transform-style: preserve-3d;
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        }
+
+        .text, .heart {
+        position: absolute;
+        will-change: transform;
+        transform-origin: center;
+        }
+
+        .text {
+        color: #fff;
+        font-size: 20px;
+        text-shadow: 0 0 6px #ff4de6, 0 0 20px #ff4de6;
+        white-space: nowrap;
+        animation: floatText linear forwards;
+        opacity: 0.95;
+        }
+
+        @keyframes floatText {
+        0% { opacity: 1; }
+        100% { transform: translateY(-200vh); opacity: 0; }
+        }
+
+        .heart {
+        width: 20px;
+        height: 20px;
+        background: red;
+        transform: rotate(45deg);
+        animation: floatHeart linear forwards;
+        box-shadow: 0 0 10px red, 0 0 20px #ff4d4d;
+        }
+
+        .heart::before, .heart::after {
+        content: "";
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: red;
+        border-radius: 50%;
+        }
+
+        .heart::before { top: -10px; left: 0; }
+        .heart::after { left: -10px; top: 0; }
+
+        @keyframes floatHeart {
+        0% { opacity: 1; }
+        100% { transform: translateY(-200vh) rotate(45deg); opacity: 0; }
+        }
+
+        .stars {
+        position: absolute;
+        width: 200%;
+        height: 200%;
+        top: -50%;
+        left: -50%;
+        background-image: radial-gradient(white 1px, transparent 1px);
+        background-size: 2px 2px;
+        opacity: 0.2;
+        animation: moveStars 120s linear infinite;
+        pointer-events: none;
+        }
+
+        @keyframes moveStars {
+        0% { transform: translate3d(0, 0, 0); }
+        100% { transform: translate3d(500px, 1000px, 0); }
+        }
+
+        audio { display: none; }
+    </style>
+    </head>
+    <body>
+    <audio autoplay loop>
+        <source src="https://example.com/i-love-you-so.mp3" type="audio/mp3" />
+    </audio>
+
+    <div class="viewport">
+        <div class="stars"></div>
+        <div class="world" id="world">
+        <div class="scene" id="scene"></div>
+        </div>
+    </div>
+
+    <script>
+        const messages = [
+        "HALO CACA IIMUT♡", "gabole badmood lagi ya", "CAHAYA RINDIIII",
+        "peluk dari jauhh 🩆", "semangat terus ya cintaa", "semoga mensnyaa ga terlau skittt",
+        "JANGAN LUPA BERAK", "jangan nangiss muluu yaaa"
+        ];
+
+        const scene = document.getElementById("scene");
+
+        function createText() {
+        const text = document.createElement("div");
+        text.className = "text";
+        text.textContent = messages[Math.floor(Math.random() * messages.length)];
+
+        const depth = Math.random() * -800;
+        const x = Math.random() * window.innerWidth;
+        const y = window.innerHeight;
+        const rotZ = Math.random() * 60 - 30;
+        const scale = 1 + Math.random() * 0.5;
+
+        text.dataset.x = x;
+        text.dataset.y = y;
+        text.dataset.z = depth;
+        text.dataset.rotZ = rotZ;
+        text.dataset.scale = scale;
+
+        text.style.fontSize = 14 + Math.random() * 20 + "px";
+        text.style.animationDuration = 5 + Math.random() * 5 + "s";
+
+        updateElementFacingCamera(text);
+        scene.appendChild(text);
+        setTimeout(() => scene.removeChild(text), 10000);
+        }
+
+        function createHeart() {
+        const heart = document.createElement("div");
+        heart.className = "heart";
+
+        const depth = Math.random() * -800;
+        const x = Math.random() * window.innerWidth;
+        const y = window.innerHeight;
+        const rotZ = Math.random() * 360;
+        const scale = 0.8 + Math.random() * 0.6;
+
+        heart.dataset.x = x;
+        heart.dataset.y = y;
+        heart.dataset.z = depth;
+        heart.dataset.rotZ = rotZ;
+        heart.dataset.scale = scale;
+
+        heart.style.animationDuration = 5 + Math.random() * 5 + "s";
+
+        updateElementFacingCamera(heart);
+        scene.appendChild(heart);
+        setTimeout(() => scene.removeChild(heart), 10000);
+        }
+
+        function updateElementFacingCamera(el) {
+        const x = parseFloat(el.dataset.x);
+        const y = parseFloat(el.dataset.y);
+        const z = parseFloat(el.dataset.z);
+        const rotZ = parseFloat(el.dataset.rotZ || 0);
+        const scale = parseFloat(el.dataset.scale || 1);
+
+        el.style.left = "0px";
+        el.style.top = "0px";
+        el.style.transform = `
+            translate3d(${x}px, ${y}px, ${z}px)
+            rotateX(${-currentY * 0.05}deg)
+            rotateY(${-currentX * 0.05}deg)
+            rotateZ(${rotZ}deg)
+            scale(${scale})
+        `;
+
+        const blur = Math.min(Math.abs(z) / 800, 1.5);
+        el.style.filter = `blur(${blur}px) drop-shadow(0 0 4px #ff4de6)`;
+        el.style.opacity = 1 - Math.min(Math.abs(z) / 1000, 0.6);
+        }
+
+        setInterval(createText, 200);
+        setInterval(createHeart, 300);
+
+        let startX = 0, startY = 0;
+        let currentX = 0, currentY = 0, currentZ = -200; // mulai agak menjauh
+        let isDragging = false;
+
+        const viewport = document.querySelector('.viewport');
+        const world = document.getElementById("world");
+
+        viewport.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        });
+
+        viewport.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        currentX += dx;
+        currentY += dy;
+        startX = e.clientX;
+        startY = e.clientY;
+        updateWorld();
+        });
+
+        viewport.addEventListener("mouseup", () => isDragging = false);
+        viewport.addEventListener("mouseleave", () => isDragging = false);
+
+        viewport.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        currentZ += e.deltaY * 2;
+
+        // Batas zoom
+        currentZ = Math.min(0, Math.max(currentZ, -1000));
+
+        updateWorld();
+        });
+
+        function updateWorld() {
+        world.style.transform = `
+            rotateX(${currentY * 0.05}deg)
+            rotateY(${currentX * 0.05}deg)
+            translateZ(${currentZ}px)
+        `;
+        document.querySelectorAll('.text, .heart').forEach(updateElementFacingCamera);
+        }
+    </script>
+    </body>
+    </html>
